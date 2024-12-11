@@ -1,5 +1,5 @@
 {
-  "name": "test-act-warning",
+  "name": "vitest-act-warning-repro",
   "private": true,
   "version": "0.0.0",
   "type": "module",

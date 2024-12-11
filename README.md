@@ -1,50 +1,45 @@
-# React + TypeScript + Vite
+# `act()` warning reproduction case for Vitest
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+The following `act()` warning ([[1]](https://codilime.com/blog/why-should-you-be-grateful-for-act-warnings-in-react-tests/) [[2]](https://kentcdodds.com/blog/fix-the-not-wrapped-in-act-warning)) appears when running `npm test`:
 
-Currently, two official plugins are available:
+```tsx
+stderr | src/App.test.tsx > <App /> > tests the app
+Warning: An update to App inside a test was not wrapped in act(...).
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+When testing, code that causes React state updates should be wrapped into act(...):
 
-## Expanding the ESLint configuration
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
 
-If you are developing a production application, we recommend updating the configuration to enable type aware lint rules:
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at App (/[...]/vitest-act-warning/src/App.tsx:6:55)
 
-- Configure the top-level `parserOptions` property like this:
-
-```js
-export default tseslint.config({
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ['./tsconfig.node.json', './tsconfig.app.json'],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-})
+ ✓ src/App.test.tsx (1)
+   ✓ <App /> (1)
+     ✓ tests the app
 ```
 
-- Replace `tseslint.configs.recommended` to `tseslint.configs.recommendedTypeChecked` or `tseslint.configs.strictTypeChecked`
-- Optionally add `...tseslint.configs.stylisticTypeChecked`
-- Install [eslint-plugin-react](https://github.com/jsx-eslint/eslint-plugin-react) and update the config:
+This is an easy fix: replace `vi.waitFor()` at [src/App.test.tsx#L21](src/App.test.tsx#L21) with `waitFor()` imported from `@testing-library/react` and, voilà, problem solved:
 
-```js
-// eslint.config.js
-import react from 'eslint-plugin-react'
-
-export default tseslint.config({
-  // Set the react version
-  settings: { react: { version: '18.3' } },
-  plugins: {
-    // Add the react plugin
-    react,
-  },
-  rules: {
-    // other rules...
-    // Enable its recommended rules
-    ...react.configs.recommended.rules,
-    ...react.configs['jsx-runtime'].rules,
-  },
-})
+```tsx
+ ✓ src/App.test.tsx (1)
+   ✓ <App /> (1)
+     ✓ tests the app
 ```
+
+But... why?
+
+And that's not all: alternatively, removing [`globals: true`](https://vitest.dev/config/#globals) from [vite.config.ts#L14](vite.config.ts#L14) also silences the `act()` warning!
+
+Also why?!
+
+Cross-reference: I posted these questions at https://github.com/vitest-dev/vitest/discussions/7062 🤞
+
+---
+
+Helpful resources:
+
+- https://codilime.com/blog/why-should-you-be-grateful-for-act-warnings-in-react-tests/
+- https://kentcdodds.com/blog/fix-the-not-wrapped-in-act-warning
