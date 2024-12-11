@@ -1,7 +1,11 @@
 import { describe, expect, it } from "vitest";
+import App from "./App";
+import { render, screen } from "@testing-library/react";
 
 describe("<App />", () => {
   it("tests the app", () => {
-    expect(1 + 2).toBe(3);
+    render(<App />);
+
+    expect(screen.getByText("Vite + React")).toBeInTheDocument();
   });
 });
